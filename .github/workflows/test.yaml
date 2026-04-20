@@ -1,0 +1,33 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  test-go:
+    name: Test Go (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+      - name: Run go version
+        run: go version
+      - name: Run tests
+        run: go test -cover -race ./...
