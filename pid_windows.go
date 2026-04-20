@@ -3,6 +3,7 @@ package process
 import (
 	"errors"
 	"fmt"
+	"math"
 	"path/filepath"
 	"unsafe"
 
@@ -10,6 +11,9 @@ import (
 )
 
 func pidExecutablePath(pid PID) (string, error) {
+	if pid < 0 || pid > math.MaxUint32 {
+		return "", fmt.Errorf("pid out of range for uint32")
+	}
 	return getProcPath(uint32(pid))
 }
 
