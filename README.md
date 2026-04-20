@@ -5,8 +5,8 @@
 
 `process` is a Go package that provides utilities for looking up operating system process IDs (PIDs) and metadata.
 
-It supports following platforms:
-- Darwin (macOS) – requires Cgo
+It supports the following platforms:
+- Darwin (macOS) – requires cgo
 - Windows
 - Linux
 
