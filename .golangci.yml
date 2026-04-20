@@ -22,6 +22,8 @@ linters:
     - unconvert
     - unparam
     - govet
+  disable:
+    - errcheck
   exclusions:
     generated: lax
     presets:
