@@ -3,6 +3,8 @@ package process_test
 import (
 	"errors"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -54,6 +56,58 @@ func TestFindPIDBySourcePort(t *testing.T) {
 
 		if _, err := process.FindPIDBySourcePort(0); !errors.Is(err, process.ErrNotFound) {
 			t.Errorf("err = %v, want %v", err, process.ErrNotFound)
+		}
+	})
+}
+
+func TestFindPIDByRequest(t *testing.T) {
+	t.Parallel()
+
+	t.Run("finds owning process for local HTTP request", func(t *testing.T) {
+		t.Parallel()
+
+		type result struct {
+			pid process.PID
+			err error
+		}
+
+		results := make(chan result, 1)
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			pid, err := process.FindPIDByRequest(r)
+			results <- result{pid: pid, err: err}
+		}))
+		defer srv.Close()
+
+		resp, err := srv.Client().Get(srv.URL)
+		if err != nil {
+			t.Fatalf("GET %s: %v", srv.URL, err)
+		}
+		defer resp.Body.Close()
+
+		got := <-results
+		if got.err != nil {
+			t.Fatalf("FindPIDByRequest: %v", got.err)
+		}
+		if int(got.pid) != os.Getpid() {
+			t.Errorf("PID = %d, want %d", got.pid, os.Getpid())
+		}
+	})
+
+	t.Run("returns error for malformed RemoteAddr", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := process.FindPIDByRequest(&http.Request{RemoteAddr: "127.0.0.1"})
+		if err == nil {
+			t.Fatal("err = nil")
+		}
+	})
+
+	t.Run("returns error for invalid source port", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := process.FindPIDByRequest(&http.Request{RemoteAddr: "127.0.0.1:meow"})
+		if err == nil {
+			t.Fatal("err = nil")
 		}
 	})
 }
