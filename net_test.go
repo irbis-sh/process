@@ -72,7 +72,7 @@ func TestFindPIDByRequest(t *testing.T) {
 		}
 
 		results := make(chan result, 1)
-		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 			pid, err := process.FindPIDByRequest(r)
 			results <- result{pid: pid, err: err}
 		}))
